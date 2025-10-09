@@ -8,14 +8,16 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { callTeams } from "../ApiScripts";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navagation/types";
 import {
   addTeamToFavs,
   removeTeamFromFav,
-  getFavTeamNames,
+  getAllFavTeamInfo,
   logDatabaseContents,
+  wipeUserFavorites,  
 } from "../../database/db";
 
 interface Team {
@@ -26,25 +28,28 @@ interface Team {
 }
 
 const FavoriteTeams = () => {
-  const route = useRoute<RouteProp<RootStackParamList, "favoriteTeams">>();
-  const username = route.params?.username; // Get username from navigation params
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [userName, setUserName] = useState<string | null>(null); // Store username for database operations
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
-    const initialize = async () => {
-      if (!username) {
-        console.error("No username received via navigation");
-        return;
+    // Fetch the stored username from AsyncStorage
+    const fetchUserName = async () => {
+      const storedUserName = await AsyncStorage.getItem("username");
+      if (storedUserName) {
+        setUserName(storedUserName);
+      } else {
+        console.warn("No userName found in AsyncStorage");
       }
+      console.log(storedUserName);
+    };
 
+    // Fetch all teams from the API
+    const fetchTeams = async () => {
       setLoading(true);
-
       try {
-        const favTeams = await getFavTeamNames(username);
-        setSelectedTeams(favTeams || []);
-
         process.env.RAPIDAPI_KEY = "f48a5921f5msh580809ba8c9e6cfp181a8ajsn545d715d6844";
         const teamData = await callTeams();
 
@@ -56,27 +61,67 @@ const FavoriteTeams = () => {
       } catch (error) {
         console.error("Error fetching teams:", error);
       }
-
       setLoading(false);
     };
 
-    initialize();
-  }, [username]);
+    fetchUserName();
+    fetchTeams();
 
+    // wipeUserFavorites to clear favorites on each visit to this screen
+    const clearUserFavorites = async () => {
+      if (userName) {
+        await wipeUserFavorites(userName); 
+      }
+    };
+
+    clearUserFavorites();  // Clear favorites when the component mounts (or based on any condition you prefer)
+  }, [userName]);
+
+  // Fetch user's favorite teams from the database once userName is available
+  useEffect(() => {
+    if (userName) {
+      const fetchFavoriteTeams = async () => {
+        const favTeams = await getAllFavTeamInfo(userName);
+        const favTeamNames = favTeams.map((team) => team[0]); // Assuming the first element is the team name
+        setSelectedTeams(favTeamNames); // Update the selected teams after fetching favorites
+      };
+
+      fetchFavoriteTeams();
+    }
+  }, [userName]);
+
+  // Toggle favorite team selection
   const toggleTeamSelection = async (team_name: string) => {
-    if (!username) return;
+    if (!userName) return;
 
     let updatedTeams = [...selectedTeams];
 
     if (updatedTeams.includes(team_name)) {
-      await removeTeamFromFav(username, team_name);
+      // Remove from DB if already favorited
+      await removeTeamFromFav(userName, team_name);
       updatedTeams = updatedTeams.filter((name) => name !== team_name);
     } else {
-      await addTeamToFavs(username, team_name);
+      if (updatedTeams.length >= 4) {
+        // potential bug if you go past 4 ... no idea why
+        alert("You can only select up to 4 teams.");
+        return;
+      }
+      // Add team to DB if not favorited
+      await addTeamToFavs(userName, team_name);
       updatedTeams.push(team_name);
     }
 
+    // Update selected teams state
     setSelectedTeams(updatedTeams);
+
+    // Update AsyncStorage (Kept this in case passing info to database doesn't work)
+    AsyncStorage.setItem("favoriteTeams", JSON.stringify(updatedTeams));
+
+    // Log the updated teams in DB (Checking database)
+    const updatedFavTeams = await getAllFavTeamInfo(userName);
+    console.log("Updated favorite teams in DB:", updatedFavTeams);
+
+    // Log the database contents after the update (Full check)
     await logDatabaseContents();
   };
 
