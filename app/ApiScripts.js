@@ -71,45 +71,24 @@ export const populateTeamsDatabase = async (insertTeamFunction) => {
   }
 };
 
-// callGamesByDate is using the external NBA API so this needs to be updated to use the local API???? 
-// export const callGamesByDate = async (startDate, endDate, teamID) => {
-//   try {
-//     const json = await apiCall(
-//       `https://api-nba-v1.p.rapidapi.com/games?league=standard&season=2024&team=${teamID}`
-//     );
-//     if (!json || !json.response) {
-//       throw new Error("Invalid API response");
-//     }
-//     // Filter games based on the provided date range. It was a lot easier to filter out games outside the range
-//     // than to select each date in the range and check.
-//     // this also prevents having to check if there is a game on a specific date
-//     const gameData = json.response
-//       .filter((game) => {
-//         const gameDate = new Date(game.date.start);
-//         const start = new Date(startDate);
-//         const end = new Date(endDate);
-//         return gameDate >= start && gameDate <= end;
-//       })
-//       // I think I could make call Teams redundant with this stuff at some point.
-//       .map((game) => ({
-//         id: game.id,
-//         date: new Date(game.date.start),
-//         homeTeam: {
-//           id: game.teams.home.id,
-//           name: game.teams.home.name,
-//           nickname: game.teams.home.nickname,
-//           logo: game.teams.home.logo,
-//         },
-//         awayTeam: {
-//           id: game.teams.visitors.id,
-//           name: game.teams.visitors.name,
-//           nickname: game.teams.visitors.nickname,
-//           logo: game.teams.visitors.logo,
-//         },
-//       }));
-//     return gameData; // Return the filtered and mapped game data
-//   } catch (error) {
-//     console.error("Error fetching games:", error);
-//     return [];
-//   }
-// };
+// fetching games by date range and team ID from our local backend API
+export const callGamesByDate = async (startDate, endDate, teamID) => {
+  try {
+    // dates are formatted to YYYY-MM-DD format
+    const formattedStartDate = new Date(startDate).toISOString().split('T')[0];
+    const formattedEndDate = new Date(endDate).toISOString().split('T')[0];
+    
+    //using our own endpoint for the backend API
+    let url = `http://localhost:8080/api/games/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`;
+    if (teamID) {
+      url += `&teamId=${teamID}`;
+    }
+    
+    const gameData = await apiCall(url);
+    
+    return gameData;
+  } catch (error) {
+    console.error("Ferching games error:", error);
+    return [];
+  }
+};
