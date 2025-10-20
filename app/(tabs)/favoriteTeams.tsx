@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { callTeams } from "../ApiScripts";
+// import { callTeams } from "../ApiScripts";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navagation/types";
 import {
@@ -18,6 +18,7 @@ import {
   getAllFavTeamInfo,
   logDatabaseContents,
   wipeUserFavorites,  
+  getAllTeams
 } from "../../database/db";
 
 interface Team {
@@ -51,7 +52,10 @@ const FavoriteTeams = () => {
       setLoading(true);
       try {
         process.env.RAPIDAPI_KEY = "f48a5921f5msh580809ba8c9e6cfp181a8ajsn545d715d6844";
-        const teamData = await callTeams();
+        // const teamData = await callTeams();
+        const teamData = await getAllTeams();
+
+        //should be getAllTeams() ^^
 
         if (teamData && teamData.length > 0) {
           setTeams(teamData);
