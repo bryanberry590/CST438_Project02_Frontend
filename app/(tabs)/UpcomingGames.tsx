@@ -43,7 +43,7 @@ const UpcomingGames = () => {
 
   // Reusable fetchGames function (Made Reusable for focus effect)
   const fetchGames = useCallback(async () => {
-    if (!userName) return;
+    //if (!userName) return;
     setLoading(true);
 
     try {
