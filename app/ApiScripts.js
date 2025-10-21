@@ -1,3 +1,4 @@
+import {insertTeam} from '../database/db'
 // Basic fetch function for our local API
 export const apiCall = async (endpoint) => {
   try {
@@ -22,7 +23,8 @@ export const apiCall = async (endpoint) => {
 // fetching all teams from our local API
 export const fetchAllTeams = async () => {
   try {
-    const teams = await apiCall("http://localhost:8080/api/teams");
+    const teams = await apiCall("https://sports-betting-app-da82e41ab1fd.herokuapp.com/api/teams");
+    // const teams = await fetch("https://sports-betting-app-da82e41ab1fd.herokuapp.com/api/teams");
     
     if (!teams || !Array.isArray(teams)) {
       throw new Error("Invalid API response - expected array of teams");
@@ -58,7 +60,7 @@ export const populateTeamsDatabase = async (insertTeamFunction) => {
     
     for (const team of teams) {
       try {
-        await insertTeamFunction([team.id, team.name, team.nickname, team.logo]);
+        await insertTeam([team.id, team.name, team.nickname, team.logo]);
         console.log(`Added team: ${team.name}`);
       } catch (error) {
         console.error(`Error adding team ${team.name}:`, error);
@@ -79,7 +81,7 @@ export const callGamesByDate = async (startDate, endDate, teamID) => {
     const formattedEndDate = new Date(endDate).toISOString().split('T')[0];
     
     //using our own endpoint for the backend API
-    let url = `http://localhost:8080/api/games/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`;
+    let url = `https://sports-betting-app-da82e41ab1fd.herokuapp.com/api/games/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`;
     if (teamID) {
       url += `&teamId=${teamID}`;
     }
