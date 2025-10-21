@@ -1,3 +1,4 @@
+import {insertTeam} from '../database/db'
 // Basic fetch function for our local API
 export const apiCall = async (endpoint) => {
   try {
@@ -23,6 +24,7 @@ export const apiCall = async (endpoint) => {
 export const fetchAllTeams = async () => {
   try {
     const teams = await apiCall("https://sports-betting-app-da82e41ab1fd.herokuapp.com/api/teams");
+    // const teams = await fetch("https://sports-betting-app-da82e41ab1fd.herokuapp.com/api/teams");
     
     if (!teams || !Array.isArray(teams)) {
       throw new Error("Invalid API response - expected array of teams");
@@ -58,7 +60,7 @@ export const populateTeamsDatabase = async (insertTeamFunction) => {
     
     for (const team of teams) {
       try {
-        await insertTeamFunction([team.id, team.name, team.nickname, team.logo]);
+        await insertTeam([team.id, team.name, team.nickname, team.logo]);
         console.log(`Added team: ${team.name}`);
       } catch (error) {
         console.error(`Error adding team ${team.name}:`, error);

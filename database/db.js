@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { populateTeamsDatabase } from '..app/ApiScripts'
+import { populateTeamsDatabase } from '../app/ApiScripts.js'
 
 let db; // Declare db variable
 
