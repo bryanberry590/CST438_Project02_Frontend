@@ -1,43 +1,126 @@
-// app/login.tsx — Web-only: backend handles Google OAuth
-import { Platform, Pressable, Text, View, Alert } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import React, { useState, useEffect } from "react";
+import {
+  Text,
+  View,
+  TextInput,
+  StyleSheet,
+  Button,
+  Alert,
+  ImageBackground,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { RootStackParamList } from "../navigation/types";
+import loginPic from "../../assets/images/loginPic2.jpg";
+import { verifyUserLogin, getUserID, initializeDatabase } from "../../database/db";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_BASE =
-  (process as any).env?.EXPO_PUBLIC_API_BASE ||
-  (globalThis as any).process?.env?.EXPO_PUBLIC_API_BASE ||
-  'https://sports-betting-app-da82e41ab1fd.herokuapp.com';
+export default function LoginScreen() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [dbInitialized, setDbInitialized] = useState(false);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  const FRONTEND_WEB =
-  (process as any).env?.EXPO_PUBLIC_FRONTEND_URL ||
-  (globalThis as any).process?.env?.EXPO_PUBLIC_FRONTEND_URL ||
-  'https://sports-betting-app-da82e41ab1fd.herokuapp.com';
+  useEffect(() => {
+    const initializeDb = async () => {
+      try {
+        await initializeDatabase();
+        setDbInitialized(true);
+      } catch (error) {
+        console.error("Database initialization error:", error);
+        Alert.alert("Error", "An error occurred while initializing the database.");
+      }
+    };
 
-export default function Login() {
-  const start = async () => {
-    if (Platform.OS === 'web') {
-      // Hand off to Spring Boot's OAuth entrypoint
-      window.location.href = `${API_BASE}/oauth2/authorization/google`;
-    } else {
-      await WebBrowser.openBrowserAsync(`${FRONTEND_WEB}/login`);
+    initializeDb();
+  }, []);
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both username and password.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const isValidUser = await verifyUserLogin(username, password);
+      setLoading(false);
+
+      if (isValidUser) {
+        const userID = await getUserID(username);
+
+        if (userID) {
+          //await AsyncStorage.setItem("userID", userID.toString()); // Store userID
+          await AsyncStorage.setItem("username", username);  // Store username
+          Alert.alert("Welcome", "You are now logged in!");
+
+          setTimeout(() => {
+            navigation.navigate("favoriteTeams", { username }); // Pass username via favoriteTeams
+          }, 500);
+        } else {
+          Alert.alert("Error", "User not found.");
+        }
+      } else {
+        Alert.alert("Error", "Incorrect username or password.");
+      }
+    } catch (error) {
+      setLoading(false);
+      Alert.alert("Error", "An error occurred while verifying login.");
+      console.error(error);
     }
   };
 
-  return (
-    <View style={{ padding: 24 }}>
-      <Text style={{ fontSize: 24, marginBottom: 16 }}>Sign in</Text>
-      <Pressable
-        onPress={start}
-        style={{
-          backgroundColor: '#4285F4',
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          borderRadius: 8,
-          alignSelf: 'flex-start',
-        }}
-      >
-        <Text style={{ color: '#fff', fontWeight: '600' }}>Sign in with Google</Text>
-      </Pressable>
-    </View>
-  );
+  if (!dbInitialized) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
 
+  return (
+    <ImageBackground source={loginPic} style={styles.backgroundImage}>
+      <View style={styles.container}>
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <Button title="Login" onPress={handleLogin} />
+        )}
+      </View>
+    </ImageBackground>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    marginBottom: 15,
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    width: "80%",
+  },
+  backgroundImage: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+  },
+});
