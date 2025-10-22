@@ -38,11 +38,82 @@ export const fetchAllTeams = async () => {
       logo: team.logoUrl,
     }));
 
-    console.log("Fetched teams from local API:", teamData);
+    // console.log("Fetched teams from local API:", teamData);
     return teamData;
   } catch (error) {
     console.error("Error fetching teams from local API:", error);
     return [];
+  }
+};
+
+export const fetchAllGames = async () => {
+  try {
+    const games = await apiCall("https://sports-betting-app-da82e41ab1fd.herokuapp.com/api/games");
+    
+    if (!games || !Array.isArray(games)) {
+      throw new Error("Invalid API response - expected array of games");
+    }
+    
+    // Mapping the backend game structure to match our frontend database structure
+    const gameData = games.map((game) => ({
+      id: game.gameId,
+      date: new Date(game.gameDate),
+      homeTeam: {
+        id: game.homeTeamId,
+        name: game.homeTeamName,
+        nickname: game.homeTeamNickname,
+        logo: game.homeTeamLogoUrl,
+      },
+      awayTeam: {
+        id: game.awayTeamId,
+        name: game.awayTeamName,
+        nickname: game.awayTeamNickname,
+        logo: game.awayTeamLogoUrl,
+      },
+    }));
+
+    // console.log("Fetched games from local API:", gameData);
+    return gameData;
+  } catch (error) {
+    console.error("Error fetching games from local API:", error);
+    return [];
+  }
+};
+
+export const populateGamesDatabase = async (insertGameFunction) => {
+  try {
+    const games = await fetchAllGames();
+    
+    if (games.length === 0) {
+      console.log("No games to populate");
+      return;
+    }
+    
+    console.log(`Populating database with ${games.length} games...`);
+    
+    for (const game of games) {
+      try {
+        await insertGameFunction([
+          game.id,
+          game.date.toISOString(),
+          game.homeTeam.id,
+          game.homeTeam.name,
+          game.homeTeam.nickname,
+          game.homeTeam.logo,
+          game.awayTeam.id,
+          game.awayTeam.name,
+          game.awayTeam.nickname,
+          game.awayTeam.logo,
+        ]);
+        // console.log(`Added game: ${game.homeTeam.name} vs ${game.awayTeam.name} on ${game.date.toLocaleDateString()}`);
+      } catch (error) {
+        console.error(`Error adding game ${game.id}:`, error);
+      }
+    }
+    
+    console.log("Games database population completed");
+  } catch (error) {
+    console.error("Error populating games database:", error);
   }
 };
 
@@ -61,7 +132,7 @@ export const populateTeamsDatabase = async (insertTeamFunction) => {
     for (const team of teams) {
       try {
         await insertTeam([team.id, team.name, team.nickname, team.logo]);
-        console.log(`Added team: ${team.name}`);
+        // console.log(`Added team: ${team.name}`);
       } catch (error) {
         console.error(`Error adding team ${team.name}:`, error);
       }
