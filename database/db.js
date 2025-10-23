@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { populateTeamsDatabase } from '../app/ApiScripts.js'
+import { populateTeamsDatabase, populateGamesDatabase } from '../app/ApiScripts.js'
 
 let db; // Declare db variable
 
@@ -8,6 +8,86 @@ let db; // Declare db variable
 // I was having issues when all the files were separated so I put everything in one
 // Willing to separate out again
 // Initialize database and create tables
+// export async function initializeDatabase() {
+//     // Prevent opening the database multiple times (THIS WAS A PROBLEM)
+//     if (!db) {
+//         db = await SQLite.openDatabaseAsync('database.db');
+
+//         // Create tables if not exist
+//         await db.execAsync(`
+//             PRAGMA journal_mode = WAL;
+//             CREATE TABLE IF NOT EXISTS user (
+//                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+//                 username TEXT NOT NULL UNIQUE,
+//                 password TEXT NOT NULL
+//             );
+//             CREATE TABLE IF NOT EXISTS team (
+//                 team_id INTEGER PRIMARY KEY,
+//                 team_name TEXT NOT NULL,
+//                 nickname TEXT NOT NULL,
+//                 logo_url TEXT NOT NULL
+//             );
+//             CREATE TABLE IF NOT EXISTS favorite (
+//                 team_id INTEGER NOT NULL,
+//                 user_id INTEGER NOT NULL,
+//                 PRIMARY KEY (user_id, team_id),
+//                 FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+//                 FOREIGN KEY (team_id) REFERENCES team(team_id) ON DELETE CASCADE
+//             );
+//             CREATE TABLE IF NOT EXISTS game (
+//                 game_id INTEGER PRIMARY KEY,
+//                 game_date TEXT NOT NULL,
+//                 home_team_id INTEGER NOT NULL,
+//                 home_team_name TEXT NOT NULL,
+//                 home_team_nickname TEXT NOT NULL,
+//                 home_team_logo_url TEXT NOT NULL,
+//                 away_team_id INTEGER NOT NULL,
+//                 away_team_name TEXT NOT NULL,
+//                 away_team_nickname TEXT NOT NULL,
+//                 away_team_logo_url TEXT NOT NULL
+//             );
+//         `);
+
+//         //should utilize the API to populate the teams database with the teams info
+//         populateTeamsDatabase();
+//         populateGamesDatabase();
+
+//     //     await db.execAsync(`
+//     //         INSERT OR IGNORE INTO team (team_id, team_name, nickname, logo_url)
+//     //         VALUES 
+//     //         (1, "Atlanta Hawks", "Hawks", "https://upload.wikimedia.org/wikipedia/en/2/24/Atlanta_Hawks_logo.svg"),  
+//     //         (2, "Boston Celtics", "Celtics", "https://upload.wikimedia.org/wikipedia/fr/6/65/Celtics_de_Boston_logo.svg"),  
+//     //         (4, "Brooklyn Nets", "Nets", "https://upload.wikimedia.org/wikipedia/en/4/44/Brooklyn_Nets_newlogo.svg"),  
+//     //         (5, "Charlotte Hornets", "Hornets", "https://upload.wikimedia.org/wikipedia/en/c/c4/Charlotte_Hornets_%282014%29.svg"),  
+//     //         (6, "Chicago Bulls", "Bulls", "https://upload.wikimedia.org/wikipedia/en/6/67/Chicago_Bulls_logo.svg"),  
+//     //         (7, "Cleveland Cavaliers", "Cavaliers", "https://upload.wikimedia.org/wikipedia/en/4/4b/Cleveland_Cavaliers_logo.svg"),  
+//     //         (8, "Dallas Mavericks", "Mavericks", "https://upload.wikimedia.org/wikipedia/en/9/97/Dallas_Mavericks_logo.svg"),  
+//     //         (9, "Denver Nuggets", "Nuggets", "https://upload.wikimedia.org/wikipedia/en/7/76/Denver_Nuggets.svg"),  
+//     //         (10, "Detroit Pistons", "Pistons", "https://upload.wikimedia.org/wikipedia/en/7/7c/Detroit_Pistons_logo.svg"),  
+//     //         (11, "Golden State Warriors", "Warriors", "https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg"),  
+//     //         (14, "Houston Rockets", "Rockets", "https://upload.wikimedia.org/wikipedia/en/2/28/Houston_Rockets.svg"),  
+//     //         (15, "Indiana Pacers", "Pacers", "https://upload.wikimedia.org/wikipedia/en/1/1b/Indiana_Pacers.svg"),  
+//     //         (16, "Los Angeles Clippers", "Clippers", "https://upload.wikimedia.org/wikipedia/en/b/bb/Los_Angeles_Clippers_logo.svg"),  
+//     //         (17, "Los Angeles Lakers", "Lakers", "https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg"),  
+//     //         (19, "Memphis Grizzlies", "Grizzlies", "https://upload.wikimedia.org/wikipedia/en/f/f1/Memphis_Grizzlies.svg"),  
+//     //         (20, "Miami Heat", "Heat", "https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg"),  
+//     //         (21, "Milwaukee Bucks", "Bucks", "https://upload.wikimedia.org/wikipedia/en/4/4a/Milwaukee_Bucks_logo.svg"),  
+//     //         (22, "Minnesota Timberwolves", "Timberwolves", "https://upload.wikimedia.org/wikipedia/en/c/c2/Minnesota_Timberwolves_logo.svg"),  
+//     //         (23, "New Orleans Pelicans", "Pelicans", "https://upload.wikimedia.org/wikipedia/en/0/0d/New_Orleans_Pelicans_logo.svg"),  
+//     //         (24, "New York Knicks", "Knicks", "https://upload.wikimedia.org/wikipedia/en/2/25/New_York_Knicks_logo.svg"),  
+//     //         (25, "Oklahoma City Thunder", "Thunder", "https://upload.wikimedia.org/wikipedia/en/5/5d/Oklahoma_City_Thunder.svg"),  
+//     //         (26, "Orlando Magic", "Magic", "https://upload.wikimedia.org/wikipedia/en/1/10/Orlando_Magic_logo.svg"),  
+//     //         (27, "Philadelphia 76ers", "76ers", "https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg"),  
+//     //         (28, "Phoenix Suns", "Suns", "https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg"),  
+//     //         (29, "Portland Trail Blazers", "Trail Blazers", "https://upload.wikimedia.org/wikipedia/en/2/21/Portland_Trail_Blazers_logo.svg"),  
+//     //         (30, "Sacramento Kings", "Kings", "https://upload.wikimedia.org/wikipedia/en/c/c7/SacramentoKings.svg"),  
+//     //         (31, "San Antonio Spurs", "Spurs", "https://upload.wikimedia.org/wikipedia/en/a/a2/San_Antonio_Spurs.svg"),  
+//     //         (38, "Toronto Raptors", "Raptors", "https://upload.wikimedia.org/wikipedia/en/3/36/Toronto_Raptors_logo.svg"),  
+//     //         (40, "Utah Jazz", "Jazz", "https://upload.wikimedia.org/wikipedia/en/c/c7/Utah_Jazz_logo.svg"),  
+//     //         (41, "Washington Wizards", "Wizards", "https://upload.wikimedia.org/wikipedia/en/0/02/Washington_Wizards_logo.svg");
+//     //     `);
+//     }
+// }
 export async function initializeDatabase() {
     // Prevent opening the database multiple times (THIS WAS A PROBLEM)
     if (!db) {
@@ -34,45 +114,38 @@ export async function initializeDatabase() {
                 FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
                 FOREIGN KEY (team_id) REFERENCES team(team_id) ON DELETE CASCADE
             );
+            CREATE TABLE IF NOT EXISTS game (
+                game_id INTEGER PRIMARY KEY,
+                game_date TEXT NOT NULL,
+                home_team_id INTEGER NOT NULL,
+                home_team_name TEXT NOT NULL,
+                home_team_nickname TEXT NOT NULL,
+                home_team_logo_url TEXT NOT NULL,
+                away_team_id INTEGER NOT NULL,
+                away_team_name TEXT NOT NULL,
+                away_team_nickname TEXT NOT NULL,
+                away_team_logo_url TEXT NOT NULL
+            );
         `);
 
-        //should utilize the API to populate the teams database with the teams info
-        populateTeamsDatabase();
-
-    //     await db.execAsync(`
-    //         INSERT OR IGNORE INTO team (team_id, team_name, nickname, logo_url)
-    //         VALUES 
-    //         (1, "Atlanta Hawks", "Hawks", "https://upload.wikimedia.org/wikipedia/en/2/24/Atlanta_Hawks_logo.svg"),  
-    //         (2, "Boston Celtics", "Celtics", "https://upload.wikimedia.org/wikipedia/fr/6/65/Celtics_de_Boston_logo.svg"),  
-    //         (4, "Brooklyn Nets", "Nets", "https://upload.wikimedia.org/wikipedia/en/4/44/Brooklyn_Nets_newlogo.svg"),  
-    //         (5, "Charlotte Hornets", "Hornets", "https://upload.wikimedia.org/wikipedia/en/c/c4/Charlotte_Hornets_%282014%29.svg"),  
-    //         (6, "Chicago Bulls", "Bulls", "https://upload.wikimedia.org/wikipedia/en/6/67/Chicago_Bulls_logo.svg"),  
-    //         (7, "Cleveland Cavaliers", "Cavaliers", "https://upload.wikimedia.org/wikipedia/en/4/4b/Cleveland_Cavaliers_logo.svg"),  
-    //         (8, "Dallas Mavericks", "Mavericks", "https://upload.wikimedia.org/wikipedia/en/9/97/Dallas_Mavericks_logo.svg"),  
-    //         (9, "Denver Nuggets", "Nuggets", "https://upload.wikimedia.org/wikipedia/en/7/76/Denver_Nuggets.svg"),  
-    //         (10, "Detroit Pistons", "Pistons", "https://upload.wikimedia.org/wikipedia/en/7/7c/Detroit_Pistons_logo.svg"),  
-    //         (11, "Golden State Warriors", "Warriors", "https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg"),  
-    //         (14, "Houston Rockets", "Rockets", "https://upload.wikimedia.org/wikipedia/en/2/28/Houston_Rockets.svg"),  
-    //         (15, "Indiana Pacers", "Pacers", "https://upload.wikimedia.org/wikipedia/en/1/1b/Indiana_Pacers.svg"),  
-    //         (16, "Los Angeles Clippers", "Clippers", "https://upload.wikimedia.org/wikipedia/en/b/bb/Los_Angeles_Clippers_logo.svg"),  
-    //         (17, "Los Angeles Lakers", "Lakers", "https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg"),  
-    //         (19, "Memphis Grizzlies", "Grizzlies", "https://upload.wikimedia.org/wikipedia/en/f/f1/Memphis_Grizzlies.svg"),  
-    //         (20, "Miami Heat", "Heat", "https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg"),  
-    //         (21, "Milwaukee Bucks", "Bucks", "https://upload.wikimedia.org/wikipedia/en/4/4a/Milwaukee_Bucks_logo.svg"),  
-    //         (22, "Minnesota Timberwolves", "Timberwolves", "https://upload.wikimedia.org/wikipedia/en/c/c2/Minnesota_Timberwolves_logo.svg"),  
-    //         (23, "New Orleans Pelicans", "Pelicans", "https://upload.wikimedia.org/wikipedia/en/0/0d/New_Orleans_Pelicans_logo.svg"),  
-    //         (24, "New York Knicks", "Knicks", "https://upload.wikimedia.org/wikipedia/en/2/25/New_York_Knicks_logo.svg"),  
-    //         (25, "Oklahoma City Thunder", "Thunder", "https://upload.wikimedia.org/wikipedia/en/5/5d/Oklahoma_City_Thunder.svg"),  
-    //         (26, "Orlando Magic", "Magic", "https://upload.wikimedia.org/wikipedia/en/1/10/Orlando_Magic_logo.svg"),  
-    //         (27, "Philadelphia 76ers", "76ers", "https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg"),  
-    //         (28, "Phoenix Suns", "Suns", "https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg"),  
-    //         (29, "Portland Trail Blazers", "Trail Blazers", "https://upload.wikimedia.org/wikipedia/en/2/21/Portland_Trail_Blazers_logo.svg"),  
-    //         (30, "Sacramento Kings", "Kings", "https://upload.wikimedia.org/wikipedia/en/c/c7/SacramentoKings.svg"),  
-    //         (31, "San Antonio Spurs", "Spurs", "https://upload.wikimedia.org/wikipedia/en/a/a2/San_Antonio_Spurs.svg"),  
-    //         (38, "Toronto Raptors", "Raptors", "https://upload.wikimedia.org/wikipedia/en/3/36/Toronto_Raptors_logo.svg"),  
-    //         (40, "Utah Jazz", "Jazz", "https://upload.wikimedia.org/wikipedia/en/c/c7/Utah_Jazz_logo.svg"),  
-    //         (41, "Washington Wizards", "Wizards", "https://upload.wikimedia.org/wikipedia/en/0/02/Washington_Wizards_logo.svg");
-    //     `);
+        // Check if tables are empty before populating
+        const teamCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM team;');
+        const gameCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM game;');
+        
+        // Only populate if tables are empty
+        if (teamCount.count === 0) {
+            console.log('Teams table is empty, populating...');
+            await populateTeamsDatabase(insertTeam);
+        } else {
+            console.log(`Teams table already has ${teamCount.count} teams`);
+        }
+        
+        if (gameCount.count === 0) {
+            console.log('Games table is empty, populating...');
+            await populateGamesDatabase(insertGame);
+        } else {
+            console.log(`Games table already has ${gameCount.count} games`);
+        }
     }
 }
 // -------------------------------- userTableFunctions ------------------------------------------
@@ -211,6 +284,44 @@ export async function insertTeam([team_id, team_name, nickname, logo_url]) {
         team_name,
         nickname,
         logo_url
+    );
+}
+
+export async function insertGame([
+    game_id, 
+    game_date, 
+    home_team_id, 
+    home_team_name, 
+    home_team_nickname, 
+    home_team_logo_url,
+    away_team_id, 
+    away_team_name, 
+    away_team_nickname, 
+    away_team_logo_url
+]) {
+    await db.runAsync(
+        `INSERT OR IGNORE INTO game (
+            game_id, 
+            game_date, 
+            home_team_id, 
+            home_team_name, 
+            home_team_nickname, 
+            home_team_logo_url,
+            away_team_id, 
+            away_team_name, 
+            away_team_nickname, 
+            away_team_logo_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        game_id,
+        game_date,
+        home_team_id,
+        home_team_name,
+        home_team_nickname,
+        home_team_logo_url,
+        away_team_id,
+        away_team_name,
+        away_team_nickname,
+        away_team_logo_url
     );
 }
 
