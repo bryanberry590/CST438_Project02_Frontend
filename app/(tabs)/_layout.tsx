@@ -31,13 +31,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="about"
+        name="login"
         options={{
-          title: "About",
+          title: "Login",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={
-                focused ? "information-circle" : "information-circle-outline"
+                focused ? "key" : "key"
               }
               color={color}
               size={24}
@@ -46,13 +46,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="login"
+        name="favoriteTeams"
         options={{
-          title: "Login",
+          title: "Favorites",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={
-                focused ? "key" : "key"
+                focused ? "heart" : "heart-outline"
               }
               color={color}
               size={24}

@@ -11,6 +11,7 @@ import {
 import { insertUser, isUsernameAvailable } from "../database/db"; // Import database functions
 import accountPic from "../assets/images/accountCreationPic.jpg"; // Your background image
 import { useNavigation } from "@react-navigation/native"; // Import the useNavigation hook
+import Login from '../app/(tabs)/login'; // Your main screen
 
 const AccountCreation = () => {
   // State to store the values of the form fields
